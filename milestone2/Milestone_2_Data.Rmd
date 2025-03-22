@@ -32,6 +32,7 @@ library(shiny)
 library(dslabs)
 library(DT)
 library(tsibble)
+library(patchwork)
 ```
 
 ---
@@ -57,7 +58,7 @@ nobel_prize_data <- nobel_prize_data %>%
   mutate(
     birth_date = as.Date(birth_date, format = "%Y-%m-%d"),
     death_date = as.Date(death_date, format = "%Y-%m-%d"),
-    year = as.Date(year, format = "%Y-%m-%d"), 
+    #year = as.Date(year, format = "%Y-%m-%d"), 
     birth_month = month(birth_date), #added month stuff
     death_month = month(death_date),
     laureate_id = as.integer(laureate_id),
@@ -106,7 +107,7 @@ tibble_obj = as_tsibble(nobel_prize_data, key = "laureate_id",index = "year")
 ### Preliminary Static Visualizations
 
 ```{r}
-  ggplot(nobel_prize_data, aes(x = year)) +
+g1 = ggplot(nobel_prize_data, aes(x = year)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
   labs(title = "Number of Nobel Prizes Awarded Per Year",
        x = "Year",
@@ -115,7 +116,7 @@ tibble_obj = as_tsibble(nobel_prize_data, key = "laureate_id",index = "year")
 ```
 
 ```{r}
-ggplot(nobel_prize_data, aes(x = fct_infreq(category), fill = category)) +
+g2 = ggplot(nobel_prize_data, aes(x = fct_infreq(category), fill = category)) +
   geom_bar() +
   coord_flip() +
   labs(title = "Total Nobel Prizes Awarded by Category",
@@ -126,7 +127,7 @@ ggplot(nobel_prize_data, aes(x = fct_infreq(category), fill = category)) +
 ```
 
 ```{r}
-nobel_prize_data %>%
+g3 = nobel_prize_data %>%
   count(sex) %>%
   ggplot(aes(x = "", y = n, fill = sex)) +
   geom_bar(stat = "identity", width = 1) +
@@ -137,13 +138,18 @@ nobel_prize_data %>%
 ```
 
 ```{r}
-ggplot(nobel_prize_data, aes(x = age_at_award)) +
+g4 = ggplot(nobel_prize_data, aes(x = age_at_award)) +
   geom_density(fill = "blue", alpha = 0.5) +
   labs(title = "Distribution of Age at Time of Nobel Prize Award",
        x = "Age",
        y = "Density") +
   theme_minimal()
 ```
+
+```{r}
+(g1+g2)/(g3+g4) & theme(plot.title = element_text(size = 8))
+```
+
 
 
 ```{r}
@@ -156,7 +162,7 @@ top_5_countries = nobel_prize_data %>%
   group_by(birth_country) %>% 
   summarize(total_award = n()) %>% 
   unique() %>% 
-  slice_max(order_by = total_award, n = 5)
+  slice_max(order_by = total_award, n = 10)
 
 filtered_data = tibble_obj %>% 
   filter(birth_country %in% top_5_countries$birth_country)
@@ -166,8 +172,9 @@ filtered_data = filtered_data %>%
   summarize(total_award = n())
 
 ggplot(filtered_data) +
-  geom_line(aes(year, total_award)) + 
-  facet_grid(birth_country ~ ., scale = "free_y")
+  geom_smooth(aes(year, total_award, col = birth_country), se = FALSE) + 
+  labs(title = "Nation's trend for nobel awards")
+  #facet_grid(birth_country ~ ., scale = "free_y")
 
 ```
 
@@ -192,7 +199,10 @@ world_modified = world %>%
   left_join(top_40_countries, by =c("admin" = "birth_country"))
 
 ggplot(data = world_modified) +
-    geom_sf(aes(fill = total_award))
+  geom_sf(aes(fill = total_award)) + 
+  labs(title = "Geographic spread of Nobel Prizes") +
+  theme_void() + 
+  theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
