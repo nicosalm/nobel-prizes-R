@@ -18,17 +18,17 @@ This milestone explores different visualization techniques for analyzing Nobel P
 ## Installed Libraries
 
 ```{r, echo=False}
-# Data Manipulation
+# data manipulation
 library(tidyverse)
 library(dplyr)
 library(lubridate)
 
-# Visualization
+# visualization
 library(ggrepel)
 library(scales)
 library(shiny)
 
-# Data Handling and Display
+# data handling & display
 library(dslabs)
 library(DT)
 library(tsibble)
@@ -58,37 +58,37 @@ nobel_prize_data <- nobel_prize_data %>%
   mutate(
     birth_date = as.Date(birth_date, format = "%Y-%m-%d"),
     death_date = as.Date(death_date, format = "%Y-%m-%d"),
-    #year = as.Date(year, format = "%Y-%m-%d"), 
+    #year = as.Date(year, format = "%Y-%m-%d"),
     birth_month = month(birth_date), #added month stuff
     death_month = month(death_date),
     laureate_id = as.integer(laureate_id),
     age_at_award = as.numeric(year) - as.numeric(format(birth_date, "%Y")),
     received_posthumously = ifelse(year>=death_date, TRUE, FALSE)
-  ) %>% 
+  ) %>%
   arrange(category)
 summary(nobel_prize_data)
 ```
 
 ```{r}
 
-#Changed year to date 
+#Changed year to date
 axis_choices <- c("Year" = "date",
                   "Category" = "category",
-                  "Prize" = "prize", 
-                  "Motivation" = "motivation", 
-                  "Prize Share" = "prize_share", 
-                  "Laureate ID" = "laureate_id", 
-                  "Laureate Type" = "laureate_type", 
-                  "Full Name" = "full_name", 
-                  "Birth Date" = "birth_date", 
-                  "Birth City" = "birth_city", 
-                  "Birth Country" = "birth_country", 
-                  "Sex" = "sex", 
-                  "Organization Name" = "organization_name", 
-                  "Organization City" = "organization_city", 
-                  "Organization Country" = "organization_country", 
-                  "Death Date" = "death_date", 
-                  "Death City" = "death_city", 
+                  "Prize" = "prize",
+                  "Motivation" = "motivation",
+                  "Prize Share" = "prize_share",
+                  "Laureate ID" = "laureate_id",
+                  "Laureate Type" = "laureate_type",
+                  "Full Name" = "full_name",
+                  "Birth Date" = "birth_date",
+                  "Birth City" = "birth_city",
+                  "Birth Country" = "birth_country",
+                  "Sex" = "sex",
+                  "Organization Name" = "organization_name",
+                  "Organization City" = "organization_city",
+                  "Organization Country" = "organization_country",
+                  "Death Date" = "death_date",
+                  "Death City" = "death_city",
                   "Death Country" = "death_country",
                   "Age at Award" = "age_at_award",
                   "Received Posthumously" = "received_posthumously")
@@ -108,7 +108,7 @@ tibble_obj = as_tsibble(nobel_prize_data, key = "laureate_id",index = "year")
 
 ```{r}
 g1 = ggplot(nobel_prize_data, aes(x = year)) +
-  geom_histogram(binwidth = 1, fill = "steelblue", color = "black") +
+  geom_histogram(binwidth = 12, fill = "steelblue", color = "black") +
   labs(title = "Number of Nobel Prizes Awarded Per Year",
        x = "Year",
        y = "Count") +
@@ -157,22 +157,22 @@ g4 = ggplot(nobel_prize_data, aes(x = age_at_award)) +
 
 tibble_obj = as_tsibble(nobel_prize_data, key = "laureate_id",index = "year")
 
-top_5_countries = nobel_prize_data %>% 
-  drop_na(birth_country) %>% 
-  group_by(birth_country) %>% 
-  summarize(total_award = n()) %>% 
-  unique() %>% 
+top_5_countries = nobel_prize_data %>%
+  drop_na(birth_country) %>%
+  group_by(birth_country) %>%
+  summarize(total_award = n()) %>%
+  unique() %>%
   slice_max(order_by = total_award, n = 10)
 
-filtered_data = tibble_obj %>% 
+filtered_data = tibble_obj %>%
   filter(birth_country %in% top_5_countries$birth_country)
 
-filtered_data = filtered_data %>% 
-  group_by(birth_country) %>% 
+filtered_data = filtered_data %>%
+  group_by(birth_country) %>%
   summarize(total_award = n())
 
 ggplot(filtered_data) +
-  geom_smooth(aes(year, total_award, col = birth_country), se = FALSE) + 
+  geom_smooth(aes(year, total_award, col = birth_country), se = FALSE) +
   labs(title = "Nation's trend for nobel awards")
   #facet_grid(birth_country ~ ., scale = "free_y")
 
@@ -186,22 +186,22 @@ library("rnaturalearth")
 library("rnaturalearthdata")
 
 
-top_40_countries = nobel_prize_data %>% 
-  drop_na(birth_country) %>% 
-  group_by(birth_country) %>% 
-  summarize(total_award = n()) %>% 
-  unique() %>% 
+top_40_countries = nobel_prize_data %>%
+  drop_na(birth_country) %>%
+  group_by(birth_country) %>%
+  summarize(total_award = n()) %>%
+  unique() %>%
   slice_max(order_by = total_award, n = 40)
 
 world = ne_countries(scale = "medium", returnclass = "sf")
 
-world_modified = world %>% 
+world_modified = world %>%
   left_join(top_40_countries, by =c("admin" = "birth_country"))
 
 ggplot(data = world_modified) +
-  geom_sf(aes(fill = total_award)) + 
+  geom_sf(aes(fill = total_award)) +
   labs(title = "Geographic spread of Nobel Prizes") +
-  theme_void() + 
+  theme_void() +
   theme(plot.title = element_text(hjust = 0.5))
 
 ```
