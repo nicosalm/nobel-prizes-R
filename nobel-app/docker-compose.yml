@@ -4,7 +4,7 @@ services:
     container_name: nobel-shiny-app
     restart: always
     ports:
-      - "3838:3838"
+      - "3839:3839"
     volumes:
       - ./app.R:/srv/shiny-server/app.R
       - ./nobel.csv:/srv/shiny-server/nobel.csv
